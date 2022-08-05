@@ -87,7 +87,9 @@ class LocationData(APIView):
             except Location.DoesNotExist as e:
                 print(e)
                 return Response({"success" : False,"errors":"Location doesn't exist"} )
-
+            Department.objects.filter(location=location_obj).delete()
+            Category.objects.filter(location=location_obj).delete()
+            SubCategory.objects.filter(location=location_obj).delete()
             location_obj.delete()  
             output = "Deleted Succesfully"
             return Response({'status_code': HTTP_200_OK,
