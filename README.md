@@ -1,17 +1,31 @@
 # Djangoproject
+
+# environment installation
 python -m venv inmar_envi
+
+# Activate envi 
 C:\Users\FL_LPT-596\Documents\INMAR\inmar_envi\Scripts>activate
 
+# Install requirement
 pip install -r requirements.txt
+
+# create django project
 django-admin.exe startproject inmarproj .
+
+# migrate new changes in models
 python manage.py makemigrations
+
+# db migrate
 python manage.py migrate
-python manage.py runserver
+
+# app creation
 python manage.py startapp metadata
 
+# running server
+python manage.py runserver
 
 
-#shell creation:
+# shell creation:
 ----------------
 from metadata.models import *
 from datetime import datetime
@@ -67,7 +81,7 @@ SubCategory.objects.create(name = "Breakfast Cake or Sweet Roll Frozen", locatio
 
 
 
-postgres=# SELECT version();
+# postgres=# SELECT version();
                           version
 ------------------------------------------------------------
  PostgreSQL 14.4, compiled by Visual C++ build 1914, 64-bit
