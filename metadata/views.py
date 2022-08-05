@@ -1,9 +1,10 @@
+from xml.etree.ElementPath import xpath_tokenizer
 from .models import *
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_200_OK
-
-
+from .serializers import LocationSerializer, LocationUpdateSerializer
+from datetime import datetime
 
 # Create your views here.
 
@@ -25,6 +26,72 @@ class LocationData(APIView):
             output = "Successfully Fetched"
             return Response({'status_code': HTTP_200_OK,
                                 'status': 'success', "data": location_list, "message": output})
+        except Exception as e:
+            print(e)
+            output = "Bad Request"
+            return Response({'status_code': HTTP_400_BAD_REQUEST,
+                                'status': 'failure', "message": output})
+    
+    def post(self,request):
+        try:
+            serializer = LocationSerializer(data=request.data)
+            if serializer.is_valid():
+                date_value = datetime.now()
+                Location.objects.create(name = request.data['name'],created_on = date_value, updated_on = date_value )
+                result = "succesfully created"
+                context_data = {"success" : True, "data" :{"result" : result}}
+            else:
+                context_data = {"success" : False, "errors" : {"message": "Validation Error" ,  "errors_list" : serializer.errors}}
+
+            output = "Successfully Fetched"
+            return Response({'status_code': HTTP_200_OK,
+                                'status': 'success', "data": context_data, "message": output})
+        except Exception as e:
+            print(e)
+            output = "Bad Request"
+            return Response({'status_code': HTTP_400_BAD_REQUEST,
+                                'status': 'failure', "message": output})
+    
+    def put(self,request):
+        try:
+            serializer = LocationUpdateSerializer(data=request.data)
+            if serializer.is_valid():
+                date_value = datetime.now()
+                try:
+                    loc_obj = Location.objects.get(name = request.data['old_name'])
+                    loc_obj.name = request.data['new_name']
+                    loc_obj.save()
+                except Location.DoesNotExist as e:
+                    print(e)
+                    return {"success" : False,"errors":"Location doesn't exist"}
+
+                result = "succesfully updated"
+                context_data = {"success" : True, "data" :{"result" : result}}
+            else:
+                context_data = {"success" : False, "errors" : {"message": "Validation Error" ,  "errors_list" : serializer.errors}}
+
+            output = "Successfully Fetched"
+            return Response({'status_code': HTTP_200_OK,
+                                'status': 'success', "data": context_data, "message": output})
+        except Exception as e:
+            print(e)
+            output = "Bad Request"
+            return Response({'status_code': HTTP_400_BAD_REQUEST,
+                                'status': 'failure', "message": output})
+                                
+
+    def delete(self,request,location_delete_id=None):
+        try:
+            try:
+                location_obj = Location.objects.get(id = location_delete_id)
+            except Location.DoesNotExist as e:
+                print(e)
+                return Response({"success" : False,"errors":"Location doesn't exist"} )
+
+            location_obj.delete()  
+            output = "Deleted Succesfully"
+            return Response({'status_code': HTTP_200_OK,
+                                'status': 'success', "message": output})
         except Exception as e:
             print(e)
             output = "Bad Request"
@@ -111,3 +178,4 @@ class SubCategoryData(APIView):
             output = "Bad Request"
             return Response({'status_code': HTTP_400_BAD_REQUEST,
                                 'status': 'failure', "message": output})
+
