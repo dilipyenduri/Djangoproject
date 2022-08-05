@@ -13,3 +13,10 @@ class DepartmentSerializer(serializers.Serializer):
 class DepartmentUpdateSerializer(serializers.Serializer):
     old_name = serializers.CharField(max_length=30)
     new_name = serializers.CharField(max_length=30)
+
+class CategorySerializer(serializers.Serializer):
+    name = serializers.CharField(max_length=30)
+
+class CategoryUpdateSerializer(serializers.Serializer):
+    old_name = serializers.CharField(max_length=30)
+    new_name = serializers.CharField(max_length=30)

@@ -1,9 +1,10 @@
+from unicodedata import category
 from xml.etree.ElementPath import xpath_tokenizer
 from .models import *
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_200_OK
-from .serializers import LocationSerializer, LocationUpdateSerializer, DepartmentSerializer, DepartmentUpdateSerializer
+from .serializers import LocationSerializer, LocationUpdateSerializer, DepartmentSerializer, DepartmentUpdateSerializer, CategorySerializer, CategoryUpdateSerializer
 from datetime import datetime
 
 # Create your views here.
@@ -157,7 +158,8 @@ class DepartmentData(APIView):
             if serializer.is_valid():
                 date_value = datetime.now()
                 try:
-                    dept_obj = Department.objects.get(name = request.data['old_name'])
+                    location_obj = Location.objects.get(id=location_id)
+                    dept_obj = Department.objects.get(name = request.data['old_name'],location=location_obj)
                     dept_obj.name = request.data['new_name']
                     dept_obj.updated_on  = date_value
                     dept_obj.save()
@@ -185,7 +187,7 @@ class DepartmentData(APIView):
                 dept_obj = Department.objects.get(id = dept_delete_id)
             except Department.DoesNotExist as e:
                 print(e)
-                return Response({"success" : False,"errors":"Location doesn't exist"} )
+                return Response({"success" : False,"errors":"Department doesn't exist"} )
             Category.objects.filter(department=dept_obj).delete()
             SubCategory.objects.filter(department=dept_obj).delete()
             dept_obj.delete()  
@@ -226,6 +228,77 @@ class CategoryData(APIView):
             output = "Bad Request"
             return Response({'status_code': HTTP_400_BAD_REQUEST,
                                 'status': 'failure', "message": output})
+    
+    def post(self,request,location_id=None,department_id=None):
+        try:
+            serializer = CategorySerializer(data=request.data)
+            if serializer.is_valid():
+                date_value = datetime.now()
+                location_obj = Location.objects.get(id=location_id)
+                department_obj = Department.objects.get(id=department_id)
+                Category.objects.create(name = request.data['name'],location=location_obj,department=department_obj,created_on = date_value, updated_on = date_value )
+                result = "succesfully created"
+                context_data = {"success" : True, "data" :{"result" : result}}
+            else:
+                context_data = {"success" : False, "errors" : {"message": "Validation Error" ,  "errors_list" : serializer.errors}}
+
+            output = "Successfully Created"
+            return Response({'status_code': HTTP_200_OK,
+                                'status': 'success', "data": context_data, "message": output})
+        except Exception as e:
+            print(e)
+            output = "Bad Request"
+            return Response({'status_code': HTTP_400_BAD_REQUEST,
+                                'status': 'failure', "message": output})
+    
+    def put(self,request,location_id=None,department_id=None):
+        try:
+            serializer = DepartmentUpdateSerializer(data=request.data)
+            if serializer.is_valid():
+                date_value = datetime.now()
+                try:
+                    location_obj = Location.objects.get(id=location_id)
+                    department_obj = Department.objects.get(id=department_id)
+                    cat_obj = Category.objects.get(name = request.data['old_name'],location=location_obj,department=department_obj)
+                    cat_obj.name = request.data['new_name']
+                    cat_obj.updated_on  = date_value
+                    cat_obj.save()
+                except Category.DoesNotExist as e:
+                    print(e)
+                    return {"success" : False,"errors":"Category doesn't exist"}
+
+                result = "succesfully updated"
+                context_data = {"success" : True, "data" :{"result" : result}}
+            else:
+                context_data = {"success" : False, "errors" : {"message": "Validation Error" ,  "errors_list" : serializer.errors}}
+
+            output = "Successfully Fetched"
+            return Response({'status_code': HTTP_200_OK,
+                                'status': 'success', "data": context_data, "message": output})
+        except Exception as e:
+            print(e)
+            output = "Bad Request"
+            return Response({'status_code': HTTP_400_BAD_REQUEST,
+                                'status': 'failure', "message": output})
+    
+    def delete(self,request,location_id=None,department_id=None,cat_delete_id=None):
+        try:
+            try:
+                cat_obj = Category.objects.get(id = cat_delete_id)
+            except Category.DoesNotExist as e:
+                print(e)
+                return Response({"success" : False,"errors":"Category doesn't exist"} )
+            SubCategory.objects.filter(category=cat_obj).delete()
+            cat_obj.delete()
+            output = "Deleted Succesfully"
+            return Response({'status_code': HTTP_200_OK,
+                                'status': 'success', "message": output})
+        except Exception as e:
+            print(e)
+            output = "Bad Request"
+            return Response({'status_code': HTTP_400_BAD_REQUEST,
+                                'status': 'failure', "message": output})
+
 
 
 class SubCategoryData(APIView):
