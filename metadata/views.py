@@ -3,7 +3,7 @@ from .models import *
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_200_OK
-from .serializers import LocationSerializer, LocationUpdateSerializer
+from .serializers import LocationSerializer, LocationUpdateSerializer, DepartmentSerializer, DepartmentUpdateSerializer
 from datetime import datetime
 
 # Create your views here.
@@ -19,6 +19,7 @@ class LocationData(APIView):
             location_obj = Location.objects.all()
             for each in location_obj:
                 location_dict = {}
+                location_dict['id'] = each.id
                 location_dict['name'] = each.name
                 location_dict['created_on'] = each.created_on
                 location_dict['updated_on'] = each.updated_on
@@ -43,7 +44,7 @@ class LocationData(APIView):
             else:
                 context_data = {"success" : False, "errors" : {"message": "Validation Error" ,  "errors_list" : serializer.errors}}
 
-            output = "Successfully Fetched"
+            output = "Successfully Created"
             return Response({'status_code': HTTP_200_OK,
                                 'status': 'success', "data": context_data, "message": output})
         except Exception as e:
@@ -60,6 +61,7 @@ class LocationData(APIView):
                 try:
                     loc_obj = Location.objects.get(name = request.data['old_name'])
                     loc_obj.name = request.data['new_name']
+                    loc_obj.updated_on  = date_value
                     loc_obj.save()
                 except Location.DoesNotExist as e:
                     print(e)
@@ -113,7 +115,9 @@ class DepartmentData(APIView):
             department_obj = Department.objects.filter(location = location_obj)
             for each_dept in department_obj:
                 department_dict = {}
+                department_dict['id'] = each_dept.id
                 department_dict['name'] = each_dept.name
+                department_dict['location'] = each_dept.location.name
                 department_dict['created_on'] = each_dept.created_on
                 department_dict['updated_on'] = each_dept.updated_on
                 department_list.append(department_dict)
@@ -125,7 +129,74 @@ class DepartmentData(APIView):
             output = "Bad Request"
             return Response({'status_code': HTTP_400_BAD_REQUEST,
                                 'status': 'failure', "message": output})
+    
+    def post(self,request,location_id=None):
+        try:
+            serializer = DepartmentSerializer(data=request.data)
+            if serializer.is_valid():
+                date_value = datetime.now()
+                location_obj = Location.objects.get(id=location_id)
+                Department.objects.create(name = request.data['name'],location=location_obj,created_on = date_value, updated_on = date_value )
+                result = "succesfully created"
+                context_data = {"success" : True, "data" :{"result" : result}}
+            else:
+                context_data = {"success" : False, "errors" : {"message": "Validation Error" ,  "errors_list" : serializer.errors}}
 
+            output = "Successfully Created"
+            return Response({'status_code': HTTP_200_OK,
+                                'status': 'success', "data": context_data, "message": output})
+        except Exception as e:
+            print(e)
+            output = "Bad Request"
+            return Response({'status_code': HTTP_400_BAD_REQUEST,
+                                'status': 'failure', "message": output})
+
+    def put(self,request,location_id=None):
+        try:
+            serializer = DepartmentUpdateSerializer(data=request.data)
+            if serializer.is_valid():
+                date_value = datetime.now()
+                try:
+                    dept_obj = Department.objects.get(name = request.data['old_name'])
+                    dept_obj.name = request.data['new_name']
+                    dept_obj.updated_on  = date_value
+                    dept_obj.save()
+                except Department.DoesNotExist as e:
+                    print(e)
+                    return {"success" : False,"errors":"Department doesn't exist"}
+
+                result = "succesfully updated"
+                context_data = {"success" : True, "data" :{"result" : result}}
+            else:
+                context_data = {"success" : False, "errors" : {"message": "Validation Error" ,  "errors_list" : serializer.errors}}
+
+            output = "Successfully Fetched"
+            return Response({'status_code': HTTP_200_OK,
+                                'status': 'success', "data": context_data, "message": output})
+        except Exception as e:
+            print(e)
+            output = "Bad Request"
+            return Response({'status_code': HTTP_400_BAD_REQUEST,
+                                'status': 'failure', "message": output})
+    
+    def delete(self,request,location_id=None,dept_delete_id=None):
+        try:
+            try:
+                dept_obj = Department.objects.get(id = dept_delete_id)
+            except Department.DoesNotExist as e:
+                print(e)
+                return Response({"success" : False,"errors":"Location doesn't exist"} )
+            Category.objects.filter(department=dept_obj).delete()
+            SubCategory.objects.filter(department=dept_obj).delete()
+            dept_obj.delete()  
+            output = "Deleted Succesfully"
+            return Response({'status_code': HTTP_200_OK,
+                                'status': 'success', "message": output})
+        except Exception as e:
+            print(e)
+            output = "Bad Request"
+            return Response({'status_code': HTTP_400_BAD_REQUEST,
+                                'status': 'failure', "message": output})
 
 class CategoryData(APIView):
     """
@@ -140,7 +211,10 @@ class CategoryData(APIView):
             catergory_obj = Category.objects.filter(location=location_obj,department=department_obj)
             for each_cat in catergory_obj:
                 cat_dict = {}
+                cat_dict['id'] = each_cat.id
                 cat_dict['name'] = each_cat.name
+                cat_dict['location'] = each_cat.location.name
+                cat_dict['department'] = each_cat.department.name
                 cat_dict['created_on'] = each_cat.created_on
                 cat_dict['updated_on'] = each_cat.updated_on
                 category_list.append(cat_dict)
