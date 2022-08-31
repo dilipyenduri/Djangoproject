@@ -328,3 +328,4 @@ class SubCategoryData(APIView):
             return Response({'status_code': HTTP_400_BAD_REQUEST,
                                 'status': 'failure', "message": output})
 
+
